@@ -22,9 +22,9 @@ td, th { border-bottom: 1px solid #d7dfd6; padding: 2mm; text-align: left; verti
 a { color: #215c40; }
 footer { position: fixed; bottom: -9mm; color: #6d806f; font-size: 8pt; }
 </style></head><body>
-<div class="eyebrow">WordPress setup and operations · 29 October 2026</div>
+<div class="eyebrow">WordPress setup and operations · 30 October 2026</div>
 <h1>Restaurant Reservations<br>Setup guide</h1>
-<p>A generic restaurant website with an editable menu and table reservations. The local stack includes WordPress, MariaDB, and Mailpit for captured test email.</p>
+<p>A restaurant website with an editable menu and table reservations. The local stack includes WordPress, MariaDB, and Mailpit for captured test email.</p>
 <div class="callout"><strong>Local result:</strong> the site was installed from a fresh Docker volume and the reservation flow passed in Chrome and the API smoke test. The existing site is available at <code>http://127.0.0.1:18087/</code>.</div>
 
 <h2>1. Requirements</h2>
@@ -42,30 +42,31 @@ Remove-Item Env:WP_ADMIN_PASSWORD</pre>
 
 <h2>3. Edit and operate the site</h2>
 <table><tr><th>Task</th><th>Where</th></tr><tr><td>Edit dishes, prices, categories, and images</td><td>WordPress Admin → Menu dishes</td></tr><tr><td>View bookings and guest details</td><td>WordPress Admin → Reservations</td></tr><tr><td>Release a booking slot</td><td>Move that reservation to Trash</td></tr><tr><td>Review test emails</td><td>Mailpit on local port 18088</td></tr></table>
-<p>Guest bookings accept parties of 1–8, dates up to 60 days ahead, and at least two hours' notice. A booking is complete when its reference appears on the confirmation page. The current limit is ten parties per 90-minute slot.</p>
+<p>Guest bookings accept parties of 1–8, dates up to 60 days ahead, and at least two hours' notice. A booking is complete when its reference appears on the confirmation page. A database lock enforces the current ten-party limit per 90-minute slot for simultaneous website requests. Set capacity to the real floor plan before launch.</p>
 
 <h2>4. Verify the installation</h2>
 <pre>docker compose ps
 node qa/reservation-smoke.mjs
+node qa/capacity-smoke.mjs
 python qa/chrome-mcp-check.py</pre>
-<p>The smoke test checks an invalid date, a valid booking, confirmation access, both guest and admin emails, and cleanup. The Chrome MCP test checks the home page, menu filter, mobile overflow, and a browser booking, then removes its test booking. Both tests need the local site running on the default ports.</p>
+<p>The reservation test checks errors, booking confirmation, Mailpit delivery, and cleanup. The capacity test sends twelve simultaneous requests, accepts at most ten, and removes its test bookings. The Chrome MCP test checks navigation, menu filtering, mobile layout, and a browser booking. These checks need the local site running on the default ports.</p>
 <p>To stop only this project, run <code>docker compose down</code>. Its database and WordPress volumes remain. Do not use <code>down -v</code> unless you intentionally want to erase its bookings and content.</p>
 
 <h2>5. Files and configuration</h2>
 <table><tr><th>Path</th><th>Purpose</th></tr><tr><td><code>theme/</code></td><td>Deployable WordPress theme; mounted read-only in Docker</td></tr><tr><td><code>compose.yaml</code></td><td>Local WordPress, database, Mailpit, and WP-CLI services</td></tr><tr><td><code>.env</code></td><td>Private local database credentials and ports; excluded from Git</td></tr><tr><td><code>setup.ps1</code></td><td>Repeatable WordPress setup</td></tr><tr><td><code>qa/</code></td><td>Automated checks and review screenshots</td></tr></table>
 <p>Changing <code>DB_PASSWORD</code> in <code>.env</code> after a database already exists does not rotate its database user. Preserve the original value or perform an actual database password rotation. Keep <code>.env</code>, database backups, and guest records private.</p>
 
-<h2>6. VPS deployment verdict</h2>
-<div class="callout warning"><strong>Not ready to expose as a real restaurant reservation service.</strong> The Docker setup is a tested local environment. It binds WordPress to localhost, sends email into Mailpit, and uses initial business details. A public VPS needs the work below before accepting real guest data.</div>
+<h2>6. Install on WordPress and verify a VPS</h2>
+<div class="callout warning"><strong>Live deployment is not yet verified.</strong> The tested Compose stack is local only: WordPress binds to localhost and email goes to Mailpit. Use a standard WordPress installation on the VPS, then complete the checks below before accepting real guest data.</div>
 <ol>
-<li>Put the site behind a reverse proxy with a real domain and valid HTTPS certificate. Set WordPress <code>home</code> and <code>siteurl</code> to the HTTPS domain; verify login and booking redirects.</li>
-<li>Replace Mailpit with authenticated SMTP or a transactional email provider. Send and receive test messages to real addresses; remove the local mail capture service from production.</li>
-<li>Replace sample address, opening hours, dishes, prices, photos, and contact instructions. Add a privacy notice and a working cancellation/contact path.</li>
-<li>Define real table capacity and prevent concurrent overbooking. The current ten-party query can race under simultaneous submissions.</li>
-<li>Add abuse protection for the public reservation form, keep WordPress/themes/plugins patched, and use strong unique admin and database credentials.</li>
-<li>Back up the database and <code>wp-content</code> off the VPS, test restoration, and monitor service health and email failures.</li>
+<li>Install current WordPress with a supported PHP and database stack. Copy <code>theme/</code> to <code>wp-content/themes/salo/</code> or upload it as a theme ZIP; activate <strong>Restaurant Reservations</strong>. Set the homepage to <strong>Home</strong>, Post name permalinks, and the <strong>Asia/Manila</strong> timezone.</li>
+<li>Put WordPress behind a reverse proxy with a real domain and valid HTTPS certificate. Set WordPress Address and Site Address to the HTTPS domain; verify login, assets, and booking redirects.</li>
+<li>Install and configure a WordPress SMTP delivery plugin with the mail provider's authenticated settings. The theme sends through WordPress <code>wp_mail()</code>. Do not set <code>RESTAURANT_DEMO_MAILPIT_HOST</code> on the VPS. Send a plugin test email, then submit a real test booking and confirm delivery to both guest and administrator inboxes.</li>
+<li>Set the ten-party slot capacity to match the restaurant's actual tables. The database lock prevents simultaneous website submissions from exceeding that limit; staff must also respect it when entering bookings manually.</li>
+<li>Replace initial address, opening hours, dishes, prices, photos, and contact instructions. Add a privacy notice and a working cancellation/contact path.</li>
+<li>Add abuse protection to the public form, keep WordPress/themes/plugins patched, and use strong unique admin and database credentials. Back up the database and <code>wp-content</code> off the VPS, test restoration, and monitor site health and failed mail.</li>
 </ol>
-<p>For a <em>public staging site with test data only</em>, use HTTPS and a reverse proxy, disable real reservations, and clearly label initial content. Do not publish the local <code>.env</code> or test admin credentials.</p>
+<p>The local capacity and Mailpit tests passed. A live VPS, HTTPS, backup restore, and real SMTP delivery cannot be certified without the target server, domain, and mail-provider configuration. Do not publish the local <code>.env</code> or test admin credentials.</p>
 
 <h2>References</h2>
 <p><a href="https://developer.wordpress.org/cli/commands/core/install/">WP-CLI install command</a> · <a href="https://hub.docker.com/_/wordpress">Official WordPress Docker image</a> · <a href="https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/">Docker Compose environment variables</a> · <a href="https://developer.wordpress.org/advanced-administration/security/backup/">WordPress backup guidance</a></p>

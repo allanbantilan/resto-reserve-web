@@ -37,7 +37,7 @@ The database and WordPress files persist in Docker volumes. `docker compose down
 | View reservations and guest details | **Reservations** |
 | Release a booked slot | Move its reservation to Trash |
 
-Reservations accept parties of 1–8, dates up to 60 days ahead, and bookings made at least two hours before the selected time. The current capacity setting allows ten reservations per 90-minute slot. Email sent by the local Docker environment is captured in [Mailpit](http://127.0.0.1:18088/).
+Reservations accept parties of 1–8, dates up to 60 days ahead, and bookings made at least two hours before the selected time. A database lock prevents simultaneous website requests from exceeding the current ten-party limit per 90-minute slot. Set that limit to match the restaurant's actual tables before launch. Email sent by the local Docker environment is captured in [Mailpit](http://127.0.0.1:18088/).
 
 ## Verification
 
@@ -45,13 +45,16 @@ With Docker running, use Node.js and Python to run the included checks:
 
 ```powershell
 node qa/reservation-smoke.mjs
+node qa/capacity-smoke.mjs
 python qa/chrome-mcp-check.py
 ```
 
-The first check validates booking errors, confirmation, email capture, and cleanup. The Chrome DevTools MCP check covers navigation, the menu filter, mobile layout, and a browser booking. The local setup and deployment requirements are documented in the [setup guide](docs/setup-guide.pdf).
+The first check validates booking errors, confirmation, email capture, and cleanup. The capacity check submits twelve bookings simultaneously, verifies that at most ten succeed, and removes its test bookings. The Chrome DevTools MCP check covers navigation, the menu filter, mobile layout, and a browser booking. The local setup and deployment requirements are documented in the [setup guide](docs/setup-guide.pdf).
 
 ## Deployment requirements
 
-The supplied Compose file is configured for local development: WordPress binds to `127.0.0.1`, and email goes to Mailpit. Before accepting reservations on a public server, configure a domain and HTTPS reverse proxy, real SMTP delivery, off-server backups, abuse protection, and table capacity rules that prevent concurrent overbooking. Replace the initial address, hours, menu content, and images, and publish a privacy notice and reservation contact policy.
+The site is a standard WordPress theme. For an existing WordPress installation, copy `theme/` to `wp-content/themes/salo/` or package it as a theme ZIP, then activate **Restaurant Reservations** in WordPress Admin. Activation creates the site pages and initial dishes. Set the homepage to **Home**, Post name permalinks, and the **Asia/Manila** timezone. Do not deploy the local `compose.yaml` unchanged: it includes Mailpit and binds WordPress to localhost.
+
+Before accepting real reservations on a VPS, configure a domain and HTTPS, install and configure a WordPress SMTP delivery plugin, and confirm that both guest and administrator emails reach real inboxes. The theme uses WordPress `wp_mail()`, so an SMTP plugin can provide the production transport; do not set `RESTAURANT_DEMO_MAILPIT_HOST` on the VPS. Set the ten-party limit to the real floor plan, protect the form from abuse, arrange off-server backups and a restore test, and replace initial business content with a privacy notice and working cancellation/contact details. A live VPS and real SMTP check still requires the server, domain, and mail-provider configuration.
 
 The theme is in [`theme/`](theme/). Its generated hero image is stored locally; initial menu images and fonts use external services.

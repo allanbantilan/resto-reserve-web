@@ -122,12 +122,35 @@ function salo_reserve() {
     $visit = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $date . ' ' . $time, wp_timezone());
     if (!$day || $day->format('Y-m-d') !== $date || !$visit || $day < $today || $day > $today->modify('+60 days') || $visit < new DateTimeImmutable('+2 hours', wp_timezone()) || !in_array($time, salo_slots(), true)) $error('date');
     if (!$party || !$name || strlen($name) > 80 || !is_email($email) || strlen($phone) > 25 || !preg_match('/^\+?[0-9 ()-]+$/', $phone) || preg_match_all('/\d/', $phone) < 7 || strlen($note) > 500) $error('details');
-    // shortcut: ten parties per 90-minute slot, replace with table-level capacity when the real floor plan is known.
-    $existing = get_posts(['post_type' => 'salo_reservation', 'post_status' => 'publish', 'numberposts' => 10, 'fields' => 'ids', 'meta_query' => [['key' => '_salo_date', 'value' => $date], ['key' => '_salo_time', 'value' => $time]]]);
-    if (count($existing) >= 10) $error('full');
-    $id = wp_insert_post(['post_type' => 'salo_reservation', 'post_status' => 'publish', 'post_title' => $name . ' — ' . $date . ' ' . $time], true);
-    if (is_wp_error($id) || !$id) $error('save');
-    foreach (['_salo_date' => $date, '_salo_time' => $time, '_salo_party' => $party, '_salo_name' => $name, '_salo_email' => $email, '_salo_phone' => $phone, '_salo_note' => $note] as $key => $value) update_post_meta($id, $key, $value);
+    // shortcut: capacity is ten parties per slot; set it from the real floor plan before launch.
+    global $wpdb;
+    $lock = 'salo_slot_' . substr(hash('sha256', $date . '|' . $time), 0, 40);
+    if ((string) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 10)', $lock)) !== '1') $error('save');
+    $failure = '';
+    $id = 0;
+    try {
+        $existing = get_posts(['post_type' => 'salo_reservation', 'post_status' => 'publish', 'numberposts' => 10, 'fields' => 'ids', 'meta_query' => [['key' => '_salo_date', 'value' => $date], ['key' => '_salo_time', 'value' => $time]]]);
+        if (count($existing) >= 10) {
+            $failure = 'full';
+        } else {
+            $id = wp_insert_post(['post_type' => 'salo_reservation', 'post_status' => 'draft', 'post_title' => $name . ' — ' . $date . ' ' . $time], true);
+            if (is_wp_error($id) || !$id) {
+                $failure = 'save';
+            } else {
+                foreach (['_salo_date' => $date, '_salo_time' => $time, '_salo_party' => $party, '_salo_name' => $name, '_salo_email' => $email, '_salo_phone' => $phone, '_salo_note' => $note] as $key => $value) {
+                    if (!update_post_meta($id, $key, $value)) { $failure = 'save'; break; }
+                }
+                if (!$failure) {
+                    $published = wp_update_post(['ID' => $id, 'post_status' => 'publish'], true);
+                    if (is_wp_error($published) || !$published) $failure = 'save';
+                }
+                if ($failure) wp_delete_post($id, true);
+            }
+        }
+    } finally {
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock));
+    }
+    if ($failure) $error($failure);
     $reference = 'RES-' . str_pad($id, 5, '0', STR_PAD_LEFT);
     $details = "Reservation $reference\n$name · $party guests\n$date at $time\nPhone: $phone\nEmail: $email\nNotes: $note";
     wp_mail($email, 'Reservation confirmed ' . $reference, "Your table is reserved. See you soon!\n\n" . $details);
