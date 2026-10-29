@@ -39,7 +39,7 @@ if ($LASTEXITCODE -ne 0) {
     $env:DEMO_SITE_URL = $SiteUrl
     $env:DEMO_ADMIN_USER = $AdminUser
     $env:DEMO_ADMIN_EMAIL = $AdminEmail
-    docker @compose run --rm -T -e WP_ADMIN_PASSWORD -e DEMO_SITE_URL -e DEMO_ADMIN_USER -e DEMO_ADMIN_EMAIL wpcli sh -c 'exec wp core install --url="$DEMO_SITE_URL" --title="Restaurant Demo" --admin_user="$DEMO_ADMIN_USER" --admin_email="$DEMO_ADMIN_EMAIL" --admin_password="$WP_ADMIN_PASSWORD" --skip-email --path=/var/www/html'
+    docker @compose run --rm -T -e WP_ADMIN_PASSWORD -e DEMO_SITE_URL -e DEMO_ADMIN_USER -e DEMO_ADMIN_EMAIL wpcli sh -c 'exec wp core install --url="$DEMO_SITE_URL" --title="restaurant." --admin_user="$DEMO_ADMIN_USER" --admin_email="$DEMO_ADMIN_EMAIL" --admin_password="$WP_ADMIN_PASSWORD" --skip-email --path=/var/www/html'
     if ($LASTEXITCODE -ne 0) { throw 'WordPress installation failed.' }
 }
 

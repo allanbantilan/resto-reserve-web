@@ -8,8 +8,8 @@ add_action('after_setup_theme', function () {
 
 add_action('wp_enqueue_scripts', function () {
     wp_enqueue_style('salo-fonts', 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap', [], null);
-    wp_enqueue_style('salo', get_theme_file_uri('assets/site.css'), [], '2.0.0');
-    wp_enqueue_script('salo', get_theme_file_uri('assets/site.js'), [], '2.0.0', true);
+    wp_enqueue_style('salo', get_theme_file_uri('assets/site.css'), [], '2.1.0');
+    wp_enqueue_script('salo', get_theme_file_uri('assets/site.js'), [], '2.1.0', true);
 });
 
 // Local Docker mail capture; production mail should use the host's SMTP setup.
@@ -130,8 +130,8 @@ function salo_reserve() {
     foreach (['_salo_date' => $date, '_salo_time' => $time, '_salo_party' => $party, '_salo_name' => $name, '_salo_email' => $email, '_salo_phone' => $phone, '_salo_note' => $note] as $key => $value) update_post_meta($id, $key, $value);
     $reference = 'RES-' . str_pad($id, 5, '0', STR_PAD_LEFT);
     $details = "Reservation $reference\n$name · $party guests\n$date at $time\nPhone: $phone\nEmail: $email\nNotes: $note";
-    wp_mail($email, 'Your Restaurant Demo reservation ' . $reference, "Your table is reserved. See you soon!\n\n" . $details);
-    wp_mail(get_option('admin_email'), 'New Restaurant Demo reservation ' . $reference, $details);
+    wp_mail($email, 'Reservation confirmed ' . $reference, "Your table is reserved. See you soon!\n\n" . $details);
+    wp_mail(get_option('admin_email'), 'New table reservation ' . $reference, $details);
     wp_safe_redirect(add_query_arg(['booking' => $reference, 'proof' => wp_create_nonce('salo_booking_' . $id)], $back));
     exit;
 }

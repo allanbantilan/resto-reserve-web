@@ -33,8 +33,8 @@ try {
   assert.doesNotMatch(await (await fetch(`${site}/reservations/?booking=RES-${id}`)).text(), /Your table is reserved/);
   const inbox = await (await fetch(`${mailpit}/api/v1/messages`)).json();
   const subjects = inbox.messages.map(message => message.Subject);
-  assert.ok(subjects.includes(`Your Restaurant Demo reservation RES-${String(id).padStart(5, '0')}`), 'guest email is captured');
-  assert.ok(subjects.includes(`New Restaurant Demo reservation RES-${String(id).padStart(5, '0')}`), 'admin email is captured');
+  assert.ok(subjects.includes(`Reservation confirmed RES-${String(id).padStart(5, '0')}`), 'guest email is captured');
+  assert.ok(subjects.includes(`New table reservation RES-${String(id).padStart(5, '0')}`), 'admin email is captured');
   console.log(`Reservation flow passed (RES-${id}).`);
 } finally {
   if (id) {

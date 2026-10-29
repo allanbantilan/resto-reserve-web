@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Restaurant Demo | Setup guide</title>
+<html lang="en"><head><meta charset="utf-8"><title>Restaurant Reservations | Setup guide</title>
 <style>
 @page { size: A4; margin: 17mm 18mm; }
 body { font: 10.5pt/1.45 Arial, sans-serif; color: #20382d; margin: 0; }
@@ -23,7 +23,7 @@ a { color: #215c40; }
 footer { position: fixed; bottom: -9mm; color: #6d806f; font-size: 8pt; }
 </style></head><body>
 <div class="eyebrow">WordPress setup and operations · 29 October 2026</div>
-<h1>Restaurant Demo<br>Setup guide</h1>
+<h1>Restaurant Reservations<br>Setup guide</h1>
 <p>A generic restaurant website with an editable menu and table reservations. The local stack includes WordPress, MariaDB, and Mailpit for captured test email.</p>
 <div class="callout"><strong>Local result:</strong> the site was installed from a fresh Docker volume and the reservation flow passed in Chrome and the API smoke test. The existing site is available at <code>http://127.0.0.1:18087/</code>.</div>
 
@@ -42,7 +42,7 @@ Remove-Item Env:WP_ADMIN_PASSWORD</pre>
 
 <h2>3. Edit and operate the site</h2>
 <table><tr><th>Task</th><th>Where</th></tr><tr><td>Edit dishes, prices, categories, and images</td><td>WordPress Admin → Menu dishes</td></tr><tr><td>View bookings and guest details</td><td>WordPress Admin → Reservations</td></tr><tr><td>Release a booking slot</td><td>Move that reservation to Trash</td></tr><tr><td>Review test emails</td><td>Mailpit on local port 18088</td></tr></table>
-<p>Guest bookings accept parties of 1–8, dates up to 60 days ahead, and at least two hours' notice. A booking is complete when its reference appears on the confirmation page. The current demo cap is ten parties per 90-minute slot.</p>
+<p>Guest bookings accept parties of 1–8, dates up to 60 days ahead, and at least two hours' notice. A booking is complete when its reference appears on the confirmation page. The current limit is ten parties per 90-minute slot.</p>
 
 <h2>4. Verify the installation</h2>
 <pre>docker compose ps
@@ -61,7 +61,7 @@ python qa/chrome-mcp-check.py</pre>
 <li>Put the site behind a reverse proxy with a real domain and valid HTTPS certificate. Set WordPress <code>home</code> and <code>siteurl</code> to the HTTPS domain; verify login and booking redirects.</li>
 <li>Replace Mailpit with authenticated SMTP or a transactional email provider. Send and receive test messages to real addresses; remove the local mail capture service from production.</li>
 <li>Replace sample address, opening hours, dishes, prices, photos, and contact instructions. Add a privacy notice and a working cancellation/contact path.</li>
-<li>Define real table capacity and prevent concurrent overbooking. The current ten-party query is a demo limit and can race under simultaneous submissions.</li>
+<li>Define real table capacity and prevent concurrent overbooking. The current ten-party query can race under simultaneous submissions.</li>
 <li>Add abuse protection for the public reservation form, keep WordPress/themes/plugins patched, and use strong unique admin and database credentials.</li>
 <li>Back up the database and <code>wp-content</code> off the VPS, test restoration, and monitor service health and email failures.</li>
 </ol>
@@ -69,5 +69,5 @@ python qa/chrome-mcp-check.py</pre>
 
 <h2>References</h2>
 <p><a href="https://developer.wordpress.org/cli/commands/core/install/">WP-CLI install command</a> · <a href="https://hub.docker.com/_/wordpress">Official WordPress Docker image</a> · <a href="https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/">Docker Compose environment variables</a> · <a href="https://developer.wordpress.org/advanced-administration/security/backup/">WordPress backup guidance</a></p>
-<footer>Restaurant Demo · Local setup and deployment assessment</footer>
+<footer>Restaurant Reservations · Local setup and deployment assessment</footer>
 </body></html>

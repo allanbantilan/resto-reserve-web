@@ -41,9 +41,15 @@ try:
     tools = request('tools/list')
     assert any(tool['name'] == 'new_page' for tool in tools['tools'])
     page = call('new_page', {'url': 'http://127.0.0.1:18087/'})
-    page_id = int(re.search(r'(\d+): Restaurant Demo', page).group(1))
+    page_id = int(re.search(r'(\d+): .*http://127\.0\.0\.1:18087/', page).group(1))
     home = call('evaluate_script', {'pageId': page_id, 'function': '() => ({title: document.title, heading: document.querySelector("h1")?.innerText, overflow: document.documentElement.scrollWidth > innerWidth})'})
     assert 'Good food.' in home and '"overflow":false' in home, home
+    for width in (375, 768, 1024, 1440):
+        call('emulate', {'pageId': page_id, 'viewport': f'{width}x844x1,mobile,touch'})
+        layout = call('evaluate_script', {'pageId': page_id, 'function': '() => ({overflow: document.documentElement.scrollWidth > innerWidth, width: innerWidth})'})
+        assert '"overflow":false' in layout and f'"width":{width}' in layout, layout
+        if width == 375:
+            call('take_screenshot', {'pageId': page_id, 'filePath': str(root / 'qa' / 'chrome-home-375.png')})
     call('take_screenshot', {'pageId': page_id, 'filePath': str(root / 'qa' / 'chrome-final-home.png'), 'fullPage': True})
 
     call('navigate_page', {'pageId': page_id, 'type': 'url', 'url': 'http://127.0.0.1:18087/menu/'})
@@ -52,6 +58,9 @@ try:
     call('emulate', {'pageId': page_id, 'viewport': '390x844x1,mobile,touch'})
     mobile = call('evaluate_script', {'pageId': page_id, 'function': '() => ({overflow: document.documentElement.scrollWidth > innerWidth, width: innerWidth})'})
     assert '"overflow":false' in mobile and '"width":390' in mobile, mobile
+    navigation = call('evaluate_script', {'pageId': page_id, 'function': '() => { const menu = document.querySelector(".mobile-menu"); menu.querySelector("summary").click(); return {open: menu.open, links: menu.querySelectorAll("nav a").length}; }'})
+    assert '"open":true' in navigation and '"links":3' in navigation, navigation
+    call('take_screenshot', {'pageId': page_id, 'filePath': str(root / 'qa' / 'chrome-mobile-nav.png')})
 
     call('navigate_page', {'pageId': page_id, 'type': 'url', 'url': 'http://127.0.0.1:18087/reservations/'})
     reservation = call('take_snapshot', {'pageId': page_id})
@@ -62,7 +71,7 @@ try:
     confirmation = call('evaluate_script', {'pageId': page_id, 'function': '() => ({heading: document.querySelector("h2")?.innerText, url: location.href})'})
     booking_id = int(re.search(r'booking=RES-(\d+)', confirmation).group(1))
     assert 'Your table is reserved.' in confirmation, confirmation
-    print('Chrome MCP passed: home, menu filter, mobile layout, reservation form, and confirmation.')
+    print('Chrome MCP passed: home, menu filter, mobile navigation, mobile layout, reservation form, and confirmation.')
 finally:
     if not booking_id and page_id:
         try:

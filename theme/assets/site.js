@@ -1,4 +1,17 @@
 (() => {
+  const mobileMenu = document.querySelector('.mobile-menu');
+  if (mobileMenu) {
+    mobileMenu.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        mobileMenu.open = false;
+        mobileMenu.querySelector('summary').focus();
+      }
+    });
+    document.addEventListener('click', event => {
+      if (!mobileMenu.contains(event.target)) mobileMenu.open = false;
+    });
+  }
+
   const cards = [...document.querySelectorAll('.menu-card')];
   const count = document.getElementById('menu-count');
   if (count) count.textContent = `${cards.length} dishes`;
@@ -17,6 +30,7 @@
   }));
 
   const form = document.getElementById('reservation-form');
+  document.querySelector('.form-alert')?.focus();
   if (form) form.addEventListener('submit', () => {
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
