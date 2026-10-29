@@ -1,0 +1,11 @@
+<?php get_header(); ?>
+<main id="main" class="menu-page shell"><div class="menu-top"><div><span class="eyebrow">FRESH FROM OUR KITCHEN</span><h1>What sounds <em>good?</em></h1><p>Comforting favorites, fresh ingredients, and something for everyone at the table.</p></div><a class="button button-dark" href="<?php echo esc_url(home_url('/reservations/')); ?>">Reserve a table <span aria-hidden="true">↗</span></a></div>
+  <div class="category-tabs" role="group" aria-label="Menu categories"><button class="active" type="button" data-category="all" aria-pressed="true">Everything</button><button type="button" data-category="bowls" aria-pressed="false">Bowls</button><button type="button" data-category="small-plates" aria-pressed="false">Small plates</button><button type="button" data-category="drinks" aria-pressed="false">Drinks</button></div>
+  <div class="menu-section-title"><div><span class="eyebrow">MADE WITH LOVE</span><h2>All the good stuff</h2></div><span class="menu-count" id="menu-count"></span></div>
+  <div class="menu-grid">
+    <?php $dishes = new WP_Query(['post_type' => 'salo_dish', 'posts_per_page' => -1, 'post_status' => 'publish', 'orderby' => 'ID', 'order' => 'ASC']); while ($dishes->have_posts()) : $dishes->the_post(); $categories = wp_get_post_terms(get_the_ID(), 'salo_category', ['fields' => 'slugs']); ?>
+      <article class="menu-card" data-category="<?php echo esc_attr(implode(' ', is_array($categories) ? $categories : [])); ?>"><div class="menu-image"><img src="<?php echo esc_url(salo_dish_image(get_the_ID())); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" loading="lazy"><span class="food-badge"><?php echo esc_html(get_post_meta(get_the_ID(), '_salo_badge', true)); ?></span></div><div class="menu-card-body"><h3><?php the_title(); ?></h3><p><?php echo esc_html(get_the_excerpt()); ?></p><strong>₱<?php echo esc_html(number_format((float) get_post_meta(get_the_ID(), '_salo_price', true), 0)); ?></strong></div></article>
+    <?php endwhile; wp_reset_postdata(); ?>
+  </div><div class="menu-end"><span aria-hidden="true">✳</span><p>See something you like? We’ve saved you a seat.</p><a class="button button-dark" href="<?php echo esc_url(home_url('/reservations/')); ?>">Make a reservation <span aria-hidden="true">↗</span></a></div>
+</main>
+<?php get_footer(); ?>
