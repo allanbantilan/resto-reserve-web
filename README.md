@@ -1,57 +1,57 @@
-# Restaurant Reservations Demo
+# Restaurant Reservations
 
-A WordPress theme for a fictional casual restaurant. Visitors explore the menu, read the story, and reserve a table. WordPress stores reservations in a private post type for staff to manage.
+A WordPress restaurant website with an editable menu and a table reservation workflow. Guests can browse dishes, choose a date and time, and receive a booking reference. Staff manage reservations and menu items in WordPress Admin.
 
-![Restaurant Demo home page](docs/home-preview.webp)
+![Restaurant Reservations home page](docs/home-preview.webp)
 
-The deployable theme is in `theme/`; Docker configuration and QA files stay outside WordPress's public theme directory.
+## Features
 
-## Run locally with Docker
+- Responsive home, menu, about, and reservation pages
+- Menu items with categories, prices, badges, and images
+- Reservation validation for date, time, party size, and contact details
+- Booking references, guest and administrator email notifications, and an admin booking list
+- Local Docker environment with MariaDB, WordPress, Mailpit, and WP-CLI
 
-This project uses its own Compose name and volumes, with no exposed database port. By default WordPress runs on **127.0.0.1:18087** and the local email inbox on **127.0.0.1:18088**. Check that both ports are free, then set an admin password and run the setup script:
+## Local setup
+
+Requires Docker Desktop with Compose and PowerShell 7. The default ports are `127.0.0.1:18087` for WordPress and `127.0.0.1:18088` for the local email inbox. Confirm those ports are free, then run:
 
 ```powershell
-Get-NetTCPConnection -LocalPort 18087 -State Listen -ErrorAction SilentlyContinue
-Get-NetTCPConnection -LocalPort 18088 -State Listen -ErrorAction SilentlyContinue
+Get-NetTCPConnection -LocalPort 18087,18088 -State Listen -ErrorAction SilentlyContinue
 $env:WP_ADMIN_PASSWORD = 'choose-a-long-unique-password'
 .\setup.ps1
 Remove-Item Env:WP_ADMIN_PASSWORD
 ```
 
-The script creates a local `.env` with random database passwords on first run, installs WordPress, activates **Restaurant Reservations Demo**, sets Post name permalinks and the Manila timezone, and creates Home, Menu, Reservations, and About pages. Seven editable demo dishes are seeded automatically. It is safe to rerun against an installed project; it does not reset the database or admin password.
+On first run, the script creates a private `.env` with random database passwords, installs WordPress, activates the theme, configures Post name permalinks and the Manila timezone, and creates the site pages and initial menu items. Rerunning it preserves existing content, reservations, and administrator credentials.
 
-Open `http://127.0.0.1:18087/`. On a fresh installation, sign in at `/wp-admin/` with the admin user `portfolio_admin` and the password you set. An existing installation keeps its original admin account. To use different free ports, run `.\setup.ps1 -SitePort 18089 -MailpitPort 18090`. An existing database keeps its original credentials in `.env`; changing those values alone does not rotate its users. See [docs/setup-guide.pdf](docs/setup-guide.pdf) for the full setup and deployment checklist.
+Open [the local website](http://127.0.0.1:18087/) and sign in at `/wp-admin/` as `site_admin` with the password you supplied. An existing installation keeps its original administrator account. To use different ports, run `.\setup.ps1 -SitePort 18089 -MailpitPort 18090` with free port numbers.
 
-To stop only this project, run `docker compose down` from this directory. The database and WordPress volumes are retained. Do not run `down -v` if you want to keep bookings.
+The database and WordPress files persist in Docker volumes. `docker compose down` stops only this project and retains those volumes. `docker compose down -v` deletes them and all stored site data. Changing a password in `.env` does not rotate an existing database user's password.
 
-## Reservation flow
+## Site operations
 
-Visit `/reservations/`. A guest chooses a date within 60 days, a 90-minute time slot from 11:00 AM to 8:00 PM, a party size from 1–8, and contact details. The server checks every value, requires at least two hours' notice, and reserves up to ten parties in each slot. It saves the booking, shows a reference, and sends email to the guest and site administrator through `wp_mail`.
+| Task | WordPress location |
+| --- | --- |
+| Edit menu items, prices, categories, and images | **Menu dishes** |
+| View reservations and guest details | **Reservations** |
+| Release a booked slot | Move its reservation to Trash |
 
-Staff can view and manage bookings in **WordPress Admin → Reservations**. Move a reservation to Trash to release its slot. In Docker, emails are captured at `http://127.0.0.1:18088`. Configure reliable SMTP delivery before using the site in a real restaurant; the booking still saves if email delivery is unavailable.
+Reservations accept parties of 1–8, dates up to 60 days ahead, and bookings made at least two hours before the selected time. The current capacity setting allows ten reservations per 90-minute slot. Email sent by the local Docker environment is captured in [Mailpit](http://127.0.0.1:18088/).
 
-Menu dishes are editable in **WordPress Admin → Menu dishes**. Set the title, excerpt, category, price, badge, and featured image. The image URL field is a fallback for the seeded demo dishes.
+## Verification
 
-## Before real use
+With Docker running, use Node.js and Python to run the included checks:
 
-- Replace the fictional Makati address, hours, prices, and demo food photos.
-- Match the ten-party slot limit to the real dining room and define a cancellation policy.
-- Configure SMTP and test notification delivery.
-- Use HTTPS and confirm the site's privacy policy covers reservation contact details.
+```powershell
+node qa/reservation-smoke.mjs
+python qa/chrome-mcp-check.py
+```
 
-The generated hero image is stored locally as WebP. Demo dish images load from Unsplash, and Google Fonts load externally.
+The first check validates booking errors, confirmation, email capture, and cleanup. The Chrome DevTools MCP check covers navigation, the menu filter, mobile layout, and a browser booking. The local setup and deployment requirements are documented in the [setup guide](docs/setup-guide.pdf).
 
-Run `node qa/reservation-smoke.mjs` while the Docker site is running to check invalid-date rejection, successful booking, confirmation access, guest and admin emails, and cleanup.
-Run `python qa/chrome-mcp-check.py` to repeat the Chrome DevTools MCP home, menu, mobile, and browser booking checks.
+## Deployment requirements
 
-## Case study
+The supplied Compose file is configured for local development: WordPress binds to `127.0.0.1`, and email goes to Mailpit. Before accepting reservations on a public server, configure a domain and HTTPS reverse proxy, real SMTP delivery, off-server backups, abuse protection, and table capacity rules that prevent concurrent overbooking. Replace the initial address, hours, menu content, and images, and publish a privacy notice and reservation contact policy.
 
-**Problem:** A restaurant website needs to turn menu interest into a clear, low-friction table booking.
-
-**Solution:** A focused reservation form with date, time, party size, contact details, immediate confirmation, and an admin list for staff.
-
-**Features:** Mobile menu filters, restaurant story and hours, server-validated bookings, slot capacity, booking references, staff notifications, and editable menu dishes.
-
-**Tools:** WordPress, PHP, CSS, JavaScript, Docker Compose, and a generated food photograph.
-
-**Result:** The reservation workflow is implemented. Speed and email reliability still need verification on the deployed host.
+The theme is in [`theme/`](theme/). Its generated hero image is stored locally; initial menu images and fonts use external services.

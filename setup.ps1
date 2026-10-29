@@ -3,7 +3,7 @@ param(
     [int]$SitePort = 18087,
     [int]$MailpitPort = 18088,
     [string]$SiteUrl = '',
-    [string]$AdminUser = 'portfolio_admin',
+    [string]$AdminUser = 'site_admin',
     [string]$AdminEmail = 'admin@example.test'
 )
 

@@ -22,7 +22,7 @@ td, th { border-bottom: 1px solid #d7dfd6; padding: 2mm; text-align: left; verti
 a { color: #215c40; }
 footer { position: fixed; bottom: -9mm; color: #6d806f; font-size: 8pt; }
 </style></head><body>
-<div class="eyebrow">Portfolio WordPress project · 29 October 2026</div>
+<div class="eyebrow">WordPress setup and operations · 29 October 2026</div>
 <h1>Restaurant Demo<br>Setup guide</h1>
 <p>A generic restaurant website with an editable menu and table reservations. The local stack includes WordPress, MariaDB, and Mailpit for captured test email.</p>
 <div class="callout"><strong>Local result:</strong> the site was installed from a fresh Docker volume and the reservation flow passed in Chrome and the API smoke test. The existing site is available at <code>http://127.0.0.1:18087/</code>.</div>
@@ -37,7 +37,7 @@ $env:WP_ADMIN_PASSWORD = 'choose-a-long-unique-password'
 .\setup.ps1
 Remove-Item Env:WP_ADMIN_PASSWORD</pre>
 <p>On the first run, <code>setup.ps1</code> creates a private <code>.env</code> with random database passwords. It starts only this Compose project, installs WordPress, activates the theme, sets Post name permalinks and the Manila timezone, and creates the four pages and seven menu dishes. Running it again preserves existing bookings and the admin password.</p>
-<p>Open <code>http://127.0.0.1:18087/</code>. On a fresh installation, sign in at <code>/wp-admin/</code> as <code>portfolio_admin</code> with the password you chose. An existing installation keeps its original admin account. Open the captured email inbox at <code>http://127.0.0.1:18088/</code>.</p>
+<p>Open <code>http://127.0.0.1:18087/</code>. On a fresh installation, sign in at <code>/wp-admin/</code> as <code>site_admin</code> with the password you chose. An existing installation keeps its original admin account. Open the captured email inbox at <code>http://127.0.0.1:18088/</code>.</p>
 <p>If either default port is occupied, run <code>.\setup.ps1 -SitePort 18089 -MailpitPort 18090</code> using free ports. On a fresh install you can also supply <code>-AdminUser</code>, <code>-AdminEmail</code>, and <code>-SiteUrl</code>.</p>
 
 <h2>3. Edit and operate the site</h2>
@@ -56,7 +56,7 @@ python qa/chrome-mcp-check.py</pre>
 <p>Changing <code>DB_PASSWORD</code> in <code>.env</code> after a database already exists does not rotate its database user. Preserve the original value or perform an actual database password rotation. Keep <code>.env</code>, database backups, and guest records private.</p>
 
 <h2>6. VPS deployment verdict</h2>
-<div class="callout warning"><strong>Not ready to expose as a real restaurant reservation service.</strong> The Docker setup is a tested portfolio demo. It binds WordPress to localhost, sends email into Mailpit, and uses sample business details. A public VPS needs the work below before accepting real guest data.</div>
+<div class="callout warning"><strong>Not ready to expose as a real restaurant reservation service.</strong> The Docker setup is a tested local environment. It binds WordPress to localhost, sends email into Mailpit, and uses initial business details. A public VPS needs the work below before accepting real guest data.</div>
 <ol>
 <li>Put the site behind a reverse proxy with a real domain and valid HTTPS certificate. Set WordPress <code>home</code> and <code>siteurl</code> to the HTTPS domain; verify login and booking redirects.</li>
 <li>Replace Mailpit with authenticated SMTP or a transactional email provider. Send and receive test messages to real addresses; remove the local mail capture service from production.</li>
@@ -65,7 +65,7 @@ python qa/chrome-mcp-check.py</pre>
 <li>Add abuse protection for the public reservation form, keep WordPress/themes/plugins patched, and use strong unique admin and database credentials.</li>
 <li>Back up the database and <code>wp-content</code> off the VPS, test restoration, and monitor service health and email failures.</li>
 </ol>
-<p>For a <em>public portfolio preview with test data only</em>, use HTTPS and a reverse proxy, remove or block real reservations, and clearly label all content as fictional. Do not publish the existing local <code>.env</code> or test admin credentials.</p>
+<p>For a <em>public staging site with test data only</em>, use HTTPS and a reverse proxy, disable real reservations, and clearly label initial content. Do not publish the local <code>.env</code> or test admin credentials.</p>
 
 <h2>References</h2>
 <p><a href="https://developer.wordpress.org/cli/commands/core/install/">WP-CLI install command</a> · <a href="https://hub.docker.com/_/wordpress">Official WordPress Docker image</a> · <a href="https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/">Docker Compose environment variables</a> · <a href="https://developer.wordpress.org/advanced-administration/security/backup/">WordPress backup guidance</a></p>
