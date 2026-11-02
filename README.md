@@ -2,6 +2,15 @@
 
 A WordPress restaurant website with an editable menu and a table reservation workflow. Guests can browse dishes, choose a date and time, and receive a booking reference. Staff manage reservations and menu items in WordPress Admin.
 
+## App flow
+
+1. Staff manage dishes, categories, prices, and images in WordPress. Visitors browse the menu and choose a reservation date, time, and party size.
+2. The theme validates the request and locks the slot while checking capacity, then stores a reservation with a booking reference.
+3. Guest and administrator notifications are sent through FluentSMTP and Brevo. Staff manage reservations in WordPress; moving one to Trash releases its slot.
+4. The live ten-party limit per 90-minute slot and starter menu must be checked against the real restaurant before accepting bookings.
+
+The live site is [resto-reserve.duckdns.org](https://resto-reserve.duckdns.org/). Its VPS deployment is part of the shared [deployment setup](https://github.com/allanbantilan/clinic-wp/tree/main/deployment).
+
 ![Restaurant Reservations home page](docs/home-preview.webp)
 
 ## Features
@@ -20,7 +29,7 @@ A WordPress restaurant website with an editable menu and a table reservation wor
 | Theme | Custom classic WordPress theme with PHP, CSS, and vanilla JavaScript; no page builder or frontend framework |
 | Content and bookings | WordPress custom post types for dishes and reservations, plus a taxonomy for menu categories |
 | Database | MariaDB 11.4 in the local Docker setup |
-| Email | WordPress `wp_mail()`; Mailpit captures local mail, while Brevo's WordPress plugin is the selected production service and still needs configuration |
+| Email | WordPress `wp_mail()`; Mailpit captures local mail, while FluentSMTP sends live mail through Brevo |
 | Local tooling | Docker Compose, WP-CLI, and PowerShell setup script |
 
 ## Local setup
@@ -66,6 +75,6 @@ The first check validates booking errors, confirmation, email capture, and clean
 
 The site is a standard WordPress theme. For an existing WordPress installation, copy `theme/` to `wp-content/themes/salo/` or package it as a theme ZIP, then activate **Restaurant Reservations** in WordPress Admin. Activation creates the site pages and initial dishes. Set the homepage to **Home**, Post name permalinks, and the **Asia/Manila** timezone. Do not deploy the local `compose.yaml` unchanged: it includes Mailpit and binds WordPress to localhost.
 
-Before accepting real reservations on a VPS, configure a domain and HTTPS, install and configure the Brevo WordPress plugin for production email, and confirm that both guest and administrator emails reach real inboxes. The theme uses WordPress `wp_mail()`; do not set `RESTAURANT_DEMO_MAILPIT_HOST` on the VPS. Set the ten-party limit to the real floor plan, protect the form from abuse, arrange off-server backups and a restore test, and replace initial business content with a privacy notice and working cancellation/contact details. A live VPS and real email check still requires the server, domain, and Brevo account configuration.
+The live VPS uses HTTPS, FluentSMTP with Brevo, and encrypted offsite backups. Confirm that guest and administrator emails reach real inboxes before accepting bookings. The theme uses WordPress `wp_mail()`; do not set `RESTAURANT_DEMO_MAILPIT_HOST` on the VPS. Set the ten-party limit to the real floor plan, protect the form from abuse, and replace initial business content with a privacy notice and working cancellation/contact details.
 
 The theme is in [`theme/`](theme/). Its generated hero image is stored locally; initial menu images and fonts use external services.
